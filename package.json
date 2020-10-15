@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "workspaces": [
+     "packages/*"
+  ],
+  "scripts": {
+    "bootstrap": "lerna bootstrap --ignore-scripts",
+    "start": "lerna run --parallel start",
+    "serve": "lerna run --parallel serve",
+    "clean": "lerna run --parallel clean",
+    "build": "lerna run --parallel build"
+  },
+  "devDependencies": {
+    "lerna": "^3.22.1"
+  },
+  "name": "whale"
+}
