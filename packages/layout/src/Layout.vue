@@ -11,14 +11,18 @@
       <div class="app-label">
         #remote-component [REMOTE]
       </div>
-      <content-element />
-      <button-element />
     </div>
   </div>
 </template>
 
-<script>
-export default {};
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+  name: 'layout',
+  setup() {
+
+  }
+});
 </script>
 
 <style scoped>

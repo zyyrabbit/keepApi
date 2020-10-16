@@ -12,7 +12,7 @@ module.exports = (env = {}) => ({
     minimize: false,
   },
   target: "web",
-  entry: path.resolve(__dirname, "./src/main.js"),
+  entry: path.resolve(__dirname, "./src/main.ts"),
   output: {
     publicPath: "auto",
   },
@@ -28,6 +28,10 @@ module.exports = (env = {}) => ({
   },
   module: {
     rules: [
+      {
+        test: /\.tsx?$/,
+        use: "babel-loader"
+      },
       {
         test: /\.vue$/,
         use: "vue-loader",
