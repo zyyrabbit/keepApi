@@ -3,6 +3,7 @@ node_modules
 dist
 .npmrc
 .cache
+package-lock.json
 
 # Log files
 npm-debug.log*

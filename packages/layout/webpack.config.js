@@ -1,10 +1,11 @@
 const path = require("path");
 const { VueLoaderPlugin } = require("vue-loader");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const { ModuleFederationPlugin } = require("webpack").container;
 
-module.exports = (env = {}) => ({
+module.exports = () => ({
   mode: "development",
   cache: false,
   devtool: "source-map",
@@ -14,17 +15,20 @@ module.exports = (env = {}) => ({
   target: "web",
   entry: path.resolve(__dirname, "./src/main.ts"),
   output: {
-    publicPath: "auto",
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'js/[name].js',
+    publicPath: '/',
+    chunkFilename: 'js/[name].js'
   },
   resolve: {
-    extensions: [".vue", ".jsx", ".js", ".json"],
+    extensions: [".tsx", ".ts", ".vue", ".jsx", ".js", ".json"],
     alias: {
-      // this isn't technically needed, since the default `vue` entry for bundlers
-      // is a simple `export * from '@vue/runtime-dom`. However having this
-      // extra re-export somehow causes webpack to always invalidate the module
-      // on the first HMR update and causes the page to reload.
+      "@": path.resolve(__dirname, "src"),
       vue: "@vue/runtime-dom",
     },
+    modules: [
+      "node_modules",
+    ]
   },
   module: {
     rules: [
@@ -34,31 +38,110 @@ module.exports = (env = {}) => ({
       },
       {
         test: /\.vue$/,
-        use: "vue-loader",
+        use: [
+          {
+            loader: "vue-loader",
+            options: {
+              babelParserPlugins: [
+                'jsx',
+                'classProperties',
+                'decorators-legacy'
+              ]
+            }
+          }
+        ]
       },
       {
-        test: /\.png$/,
-        use: {
-          loader: "url-loader",
-          options: { limit: 8192 },
-        },
+        test: /\.(png|jpe?g|gif|webp)(\?.*)?$/,
+        use: [
+          {
+            loader: "url-loader",
+            options: {
+              limit: 4096,
+              fallback: {
+                loader: "file-loader",
+                options: {
+                  name: "img/[name].[hash:8].[ext]"
+                }
+              }
+            }
+          }
+        ]
       },
       {
         test: /\.css$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader,
-            options: { hmr: !env.prod },
+            loader: 'vue-style-loader',
+            options: {
+              sourceMap: false,
+              shadowMode: false
+            }
           },
-          "css-loader",
-        ],
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: false,
+              importLoaders: 2
+            }
+          },
+        ]
       },
+      {
+        test: /\.scss$/,
+        use: [
+          {
+            loader: 'vue-style-loader',
+            options: {
+              sourceMap: false,
+              shadowMode: false
+            }
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: false,
+              importLoaders: 2
+            }
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              sourceMap: false,
+            }
+          },
+        ]
+      }
     ],
   },
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        vendors: {
+          name: 'chunk-vendors',
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10,
+          chunks: 'initial'
+        },
+        common: {
+          name: 'chunk-common',
+          minChunks: 2,
+          priority: -20,
+          chunks: 'initial',
+          reuseExistingChunk: true
+        }
+      }
+    },
+  },
   plugins: [
-    new MiniCssExtractPlugin({
-      filename: "[name].css",
-    }),
+    new webpack.DefinePlugin(
+      {
+        'process.env': {
+          NODE_ENV: '"development"',
+          BASE_URL: '"/"'
+        }
+      }
+    ),
     new ModuleFederationPlugin({
       name: "layout",
       filename: "remoteEntry.js",
@@ -67,8 +150,9 @@ module.exports = (env = {}) => ({
       },
       exposes: {},
     }),
+    new CaseSensitivePathsPlugin(),
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "./index.html"),
+      template: path.resolve(__dirname, "./public/index.html"),
       chunks: ["main"],
     }),
     new VueLoaderPlugin(),
